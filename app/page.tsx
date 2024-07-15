@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 
 export default function Home() {
@@ -13,63 +12,50 @@ export default function Home() {
     setUploading(true);
     setError(null);
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const base64String = reader.result?.toString().split(',')[1];
-      if (!base64String) {
-        setError('Failed to read file');
-        setUploading(false);
-        return;
-      }
+    const formData = new FormData();
+    formData.append('file', file);
 
-      const payload = new URLSearchParams();
-      payload.append('fileName', file.name);
-      payload.append('fileContent', base64String);
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-      try {
-        const response = await fetch('/.netlify/functions/upload', {
-          method: 'POST',
-          body: payload,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-
-        const contentType = response.headers.get('Content-Type');
-        if (contentType && contentType.includes('application/json')) {
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.error || 'Upload failed');
-          }
-          alert(`File uploaded successfully. Path: ${result.filePath}`); // Success message
-        } else {
-          // Handle non-JSON responses
-          const text = await response.text();
-          throw new Error(`Unexpected response format: ${text}`);
+      const contentType = response.headers.get('Content-Type');
+      if (contentType && contentType.includes('application/json')) {
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Upload failed');
         }
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message); // Handle known errors
-        } else {
-          setError('An unknown error occurred'); // Handle unknown errors
-        }
-      } finally {
-        setUploading(false);
+        alert('File uploaded successfully'); 
+      } else {
+        const text = await response.text();
+        throw new Error(`Unexpected response format: ${text}`);
       }
-    };
-
-    reader.onerror = () => {
-      setError('Failed to read file');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message); 
+      } else {
+        setError('An unknown error occurred');
+      }
+    } finally {
       setUploading(false);
-    };
+    }
   };
 
+  const mystyle = {
+    display: "flex",
+    width: "100vw",
+    height: "100vh",
+    justifyContent: "center",
+    alignItems: "center"
+  }
+
   return (
-    <div>
+    <div style={mystyle}>
       <input type="file" onChange={handleFileChange} />
       {uploading && <p>Uploading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
+      {error && <p style={{ color: 'red' }}>{error}</p>} 
     </div>
   );
 }
