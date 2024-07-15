@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@netlify/functions": "^2.8.1",
     "axios": "^1.7.2",
     "next": "14.2.5",
     "react": "^18",
